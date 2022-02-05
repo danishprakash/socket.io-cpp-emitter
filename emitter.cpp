@@ -1,5 +1,6 @@
 #include "emitter.h"
 #include <stdlib.h>
+#include <iostream>
 #include <stdio.h>
 #include <chrono>
 #include <thread>
@@ -24,33 +25,35 @@ const string UID = "emitter";
 const int EVENT = 2;
 const int BINARY_EVENT = 2;
 
-Emitter::Emitter():
-m_hostname(""),
-m_port(0)
-{
-}
+/* Emitter::Emitter(): */
+/* m_hostname(""), */
+/* m_port(0) */
+/* { */
+/* } */
 
-Emitter::Emitter(const string hostname, const int port):
-m_hostname(hostname),
-m_port(port)
+Emitter::Emitter()
+/* m_hostname(hostname), */
+/* m_port(port) */
 {
+    string hostname = "localhost";
+    int port = 7777;
     this->setup(hostname, port);
 }
 
-void disconnect()
-{
-}
+/* void disconnect() */
+/* { */
+/* } */
 
-bool isConnected()
-{
-    return 1;
-}
+/* bool isConnected() */
+/* { */
+/*     return 1; */
+/* } */
 
 Emitter::~Emitter()
 {
     // TODO: implement both of these methods
-    if(isConnected())
-        this->disconnect();
+    /* if(isConnected()) */
+    /*     this->disconnect(); */
 }
 
 void Emitter::setup(const string hostname, const int port)
@@ -64,44 +67,50 @@ void Emitter::setup(const string hostname, const int port)
     this->connectTo(hostname, port);
 }
 
-Emitter* Emitter::In(std::string channel, std::string payload)
+Emitter* Emitter::In(const string channel)
 {
+    if (rooms.size() == 0)
+    {
+        rooms.push_back(channel);
+    }
     return this;
 }
 
-void Emitter::To(const string channel, const string payload)
+Emitter* Emitter::To(const string channel)
 {
-    rooms.push_back(channel);
-    this->In(channel, payload);
+    return this->In(channel);
 }
 
 void Emitter::Emit(const string event, const string data)
 {
-    std::map<string, string> packet;
-    packet["type"] = EVENT;
-    packet["data"] = data;
+    vector <string> d;
+    d.push_back(event);
+    d.push_back(data);
+
+    /* string nsp = ""; */
+    /* if (flags.find("nsp") != flags.end()) */
+    /* { */
+    /*     nsp = flags.at("nsp"); */
+    /* } */
+
+    Packet packet = {
+        EVENT,
+        nsp,
+        d
+    };
 
     this->emit(packet);
 }
 
-void Emitter::emit(std::map<string, string> packet)
+void Emitter::emit(Packet packet)
 {
-    std:string flag = flags.at("nsp");
-    if (flags.find("nsp") != flags.end())
-    {
-        packet["nsp"] = flags.at("nsp");
-    }
-
-    std::map<string, string> opts;
-    opts["rooms"] = "";
-    opts["flags"] = "";
-    opts["except"] = "";
+    cout<<rooms.at(0);
+    Opts opts = { rooms, {}};
 
     // setup msgpack packet object
-    std::tuple<string, map<string, string>, map<string, string>> pack(UID, packet, opts);
+    tuple<string, Packet, Opts> pack(UID, packet, opts);
 
-    // TODO: encode msgpack payload
-    std::stringstream buffer;
+    stringstream buffer;
     msgpack::pack(buffer, pack);
 
     string channel = broadcast_channel;
@@ -116,7 +125,7 @@ void Emitter::emit(std::map<string, string> packet)
 void Emitter::publish(string channel, string buffer)
 {
     // Publish to redis
-    auto reply = (redisReply*)redisCommand(m_connection, "PUBLISH %s %s", channel, buffer);
+    auto reply = (redisReply*)redisCommand(m_connection, "PUBLISH %s %s", channel.c_str(), buffer.c_str());
     if (reply)
         freeReplyObject(reply);
     return;
