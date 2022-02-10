@@ -1,9 +1,26 @@
-#include <string>
 #include <json/json.h>
 #include <msgpack.hpp>
 #include <hiredis/hiredis.h>
 
 using namespace std;
+
+struct Opts
+{
+    vector <string> rooms;
+    /* vector <string> except; */
+    map<std::string, msgpack::type::variant> flags;
+    MSGPACK_DEFINE_MAP(rooms, flags);
+};
+
+
+struct Packet
+{
+    int type;
+    // string nsp;
+    vector<string> data;
+    MSGPACK_DEFINE_MAP(type, data);
+};
+
 
 class Emitter
 {
@@ -28,15 +45,15 @@ private:
     // emitter options
     string protocol;
 
-    void emit(std::map<string, string> packet);
+    void emit(Packet packet);
 
 public:
     Emitter();
     ~Emitter();
-    Emitter(const string hostname, const int port);
-    Emitter* In(const string channel, const string payload);
-    void Emit(const string event, const string data);
-    void To(const string channel, const string payload);
+    // Emitter(string hostname, int port);
+    Emitter* In(const string channel);
+    Emitter* To(const string channel);
+    void Emit(const string event, string data);
 
     /* RedisProvider(); */
     /* RedisProvider(const string hostname, const size_t port); */

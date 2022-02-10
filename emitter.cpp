@@ -1,35 +1,11 @@
 #include "emitter.h"
-#include <stdlib.h>
 #include <iostream>
-#include <stdio.h>
-#include <chrono>
-#include <thread>
-#include <grp.h>
-#include <sys/stat.h>
-#include <string>
-#include <fstream>
-#include <string.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <signal.h>
-#include <sys/stat.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
 
 using namespace std;
 
 const string UID = "emitter";
 const int EVENT = 2;
 const int BINARY_EVENT = 2;
-
-/* Emitter::Emitter(): */
-/* m_hostname(""), */
-/* m_port(0) */
-/* { */
-/* } */
 
 Emitter::Emitter()
 /* m_hostname(hostname), */
@@ -81,21 +57,14 @@ Emitter* Emitter::To(const string channel)
     return this->In(channel);
 }
 
-void Emitter::Emit(const string event, const string data)
+void Emitter::Emit(const string event, string data)
 {
     vector <string> d;
     d.push_back(event);
     d.push_back(data);
 
-    /* string nsp = ""; */
-    /* if (flags.find("nsp") != flags.end()) */
-    /* { */
-    /*     nsp = flags.at("nsp"); */
-    /* } */
-
     Packet packet = {
         EVENT,
-        nsp,
         d
     };
 
@@ -105,7 +74,7 @@ void Emitter::Emit(const string event, const string data)
 void Emitter::emit(Packet packet)
 {
     cout<<rooms.at(0);
-    Opts opts = { rooms, {}};
+    Opts opts = { rooms };
 
     // setup msgpack packet object
     tuple<string, Packet, Opts> pack(UID, packet, opts);
