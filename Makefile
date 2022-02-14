@@ -3,4 +3,4 @@ emitter: emitter.cpp emitter.h
 	g++ -shared -o emitter.so emitter.o
 
 test: test.cpp emitter
-	LD_LIBRARY_PATH=. g++ -D_GLIBCXX_USE_CXX11_ABI test.cpp emitter.cpp -I/usr/local/include/msgpack -I/usr/include/jsoncpp -L. -ljsoncpp -lhiredis
+	LD_LIBRARY_PATH=. g++ test.cpp emitter.cpp -I/usr/local/include/msgpack -I/usr/include/jsoncpp -L. -ljsoncpp -lhiredis
