@@ -7,29 +7,55 @@ const string UID = "emitter";
 const int EVENT = 2;
 const int BINARY_EVENT = 2;
 
-Emitter::Emitter()
-/* m_hostname(hostname), */
-/* m_port(port) */
+Emitter::Emitter(string hostname, int port):
+m_hostname(hostname),
+m_port(port)
 {
-    string hostname = "localhost";
-    int port = 7777;
     this->setup(hostname, port);
 }
 
-/* void disconnect() */
-/* { */
-/* } */
-
-/* bool isConnected() */
-/* { */
-/*     return 1; */
-/* } */
-
 Emitter::~Emitter()
 {
-    // TODO: implement both of these methods
-    /* if(isConnected()) */
-    /*     this->disconnect(); */
+    if(isConnected())
+        this->disconnect();
+}
+
+bool Emitter::isConnected()
+{
+    return (m_connected);
+}
+
+void Emitter::disconnect()
+{
+    // Sanity
+    if(!isConnected())
+        return;
+
+    // Disconnect and reset to initial state
+    if(m_connection)
+        redisFree(m_connection);
+
+    m_connection = NULL;
+    m_connected = false;
+}
+
+void Emitter::connectTo(const string hostname, const int port)
+{
+    // Sanity
+    if(hostname.empty() || port == 0)
+        return;
+
+    // Try a connection
+    struct timeval timeout = { 0, 500000 };
+    m_connection = redisConnectWithTimeout(hostname.c_str(), port, timeout);
+    if (m_connection == NULL || m_connection->err)
+    {
+        printf("Unable to set up connection with redis: %s", m_connection->errstr);
+        return;
+    }
+    m_connected = true;
+    m_hostname = hostname;
+    m_port = port;
 }
 
 void Emitter::setup(const string hostname, const int port)
@@ -45,10 +71,12 @@ void Emitter::setup(const string hostname, const int port)
 
 Emitter* Emitter::In(const string channel)
 {
-    if (rooms.size() == 0)
+    // TODO: not supporting multiple rooms yet
+    if (rooms.size() != 0)
     {
-        rooms.push_back(channel);
+        rooms.clear();
     }
+    rooms.push_back(channel);
     return this;
 }
 
@@ -73,7 +101,6 @@ void Emitter::Emit(const string event, string data)
 
 void Emitter::emit(Packet packet)
 {
-    cout<<rooms.at(0);
     Opts opts = { rooms };
 
     // setup msgpack packet object
@@ -98,24 +125,4 @@ void Emitter::publish(string channel, string buffer)
     if (reply)
         freeReplyObject(reply);
     return;
-}
-
-void Emitter::connectTo(const string hostname, const int port)
-{
-    // Sanity
-    if(hostname.empty() || port == 0)
-        return;
-
-    // Try a connection
-    struct timeval timeout = { 0, 500000 };
-    m_connection = redisConnectWithTimeout(hostname.c_str(), port, timeout);
-    if (m_connection == NULL || m_connection->err)
-    {
-        // printf("Unable to set up connection with redis: %s" + m_connection->errstr);
-        printf("Unable to set up connection with redis");
-        return;
-    }
-    m_connected = true;
-    m_hostname = hostname;
-    m_port = port;
 }
